@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Base</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body { margin: 0; overflow-x: hidden; font-family: 'Arial', sans-serif; }
+        #canvas { position: fixed; top: 0; left: 0; z-index: -1; }
+        .theme-dark { background-color: #1a1a1a; color: #fff; }
+        .theme-red { background-color: #2a0000; color: #fff; }
+        .sidebar { transition: transform 0.3s ease; }
+        .smoke-particle { position: absolute; background: rgba(200, 200, 200, 0.2); border-radius: 50%; animation: smoke 12s infinite; }
+        .falling-ball { position: absolute; background: radial-gradient(circle, #ff0000, #000); border-radius: 50%; animation: fall 6s linear infinite; }
+        .sparkle { position: absolute; background: radial-gradient(circle, #ffffff, #ff0000); border-radius: 50%; animation: sparkle 8s infinite; }
+        .hover-scale { transition: transform 0.3s ease; }
+        .hover-scale:hover { transform: scale(1.05) rotateY(5deg); }
+        .social-icon { transition: transform 0.5s ease; }
+        .social-icon:hover { transform: rotateY(360deg) scale(1.2); }
+        .section-card {
+            background-color: #2b2b2b; /* Slightly lighter than body for contrast */
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid #3a3a3a;
+        }
+        input, select, textarea {
+            background-color: #3d3d3d !important;
+            border: 1px solid #555 !important;
+            color: #eee !important;
+        }
+        button {
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        /* Responsive adjustments for sidebar */
+        @media (max-width: 767px) {
+            .sidebar.-translate-x-full {
+                transform: translateX(-100%);
+            }
+            .sidebar.translate-x-0 {
+                transform: translateX(0);
+            }
+            .ml-0.md\:ml-64 {
+                margin-left: 0;
+            }
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2b2b2b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="theme-dark">
+    <div class="sidebar fixed top-0 left-0 h-full w-64 bg-gray-900 transform -translate-x-full md:translate-x-0 z-20 shadow-lg p-4 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-extrabold text-red-500 tracking-wider">SHADOW BASE</h2>
+            <button id="closeSidebar" class="md:hidden text-gray-400 hover:text-red-500 text-3xl">&times;</button>
+        </div>
+        <nav class="mt-4">
+            <ul>
+                <li class="mb-3"><a href="#home" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">🏠</span> Home</a></li>
+                <li class="mb-3"><a href="#calculators" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">🧮</span> Calculators</a></li>
+                <li class="mb-3"><a href="#currency" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">💵</span> Currency Converter</a></li>
+                <li class="mb-3"><a href="#calendar" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">📅</span> Calendar & To-Do</a></li>
+                <li class="mb-3"><a href="#students" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">🎓</span> Student Info</a></li>
+                <li class="mb-3"><a href="#media" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">📂</span> Media & Resources</a></li>
+                <li class="mb-3"><a href="#games" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">🎮</span> Games</a></li>
+                <li class="mb-3"><a href="#internet" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">🌐</span> Internet History</a></li>
+                <li class="mb-3"><a href="#github" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">🐙</span> GitHub Guide</a></li>
+                <li class="mb-3"><a href="#math" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">➕</span> Math Solver</a></li>
+                <li class="mb-3"><a href="#media-window" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">🖼️</span> Media Window</a></li>
+                <li class="mb-3"><a href="#admin" class="block py-2 px-3 rounded hover:bg-gray-800 hover:text-red-500 hover-scale font-medium text-lg flex items-center"><span class="mr-2">⚙️</span> Admin Tools</a></li>
+            </ul>
+        </nav>
+        <div class="mt-8 pt-4 border-t border-gray-700">
+            <p class="text-sm text-gray-500 text-center">Version 1.0.0</p>
+        </div>
+    </div>
+
+    <div class="ml-0 md:ml-64 p-4 transition-all duration-300">
+        <div class="flex justify-between items-center mb-6">
+            <button id="toggleSidebar" class="md:hidden p-3 bg-gray-800 text-white rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <h1 class="text-5xl font-extrabold text-red-500 animate-pulse text-center flex-grow hidden md:block">SHADOW BASE</h1>
+            <button id="themeToggle" class="p-3 bg-gray-800 text-white rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">
+                <span class="text-2xl" role="img" aria-label="Theme Icon">🌙</span>
+            </button>
+        </div>
+
+        <section id="home" class="py-12 text-center">
+            <h1 class="text-5xl font-bold text-red-500 animate-pulse drop-shadow-lg">Welcome to Shadow Base</h1>
+            <p class="mt-4 text-xl text-gray-300 leading-relaxed">A central nexus where every element is intricately connected, designed for ultimate productivity and knowledge exploration.</p>
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="section-card hover-scale">
+                    <h3 class="text-2xl font-semibold text-red-400 mb-2">Calculations at Your Fingertips</h3>
+                    <p class="text-gray-400">From complex scientific equations to your academic GPA, get instant results.</p>
+                </div>
+                <div class="section-card hover-scale">
+                    <h3 class="text-2xl font-semibold text-red-400 mb-2">Organize Your World</h3>
+                    <p class="text-gray-400">Keep track of your schedule and tasks with our integrated calendar and to-do list.</p>
+                </div>
+                <div class="section-card hover-scale">
+                    <h3 class="text-2xl font-semibold text-red-400 mb-2">Explore & Engage</h3>
+                    <p class="text-gray-400">Dive into interactive games, learn about the internet, or manage student data.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="calculators" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Calculators</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="section-card hover-scale">
+                    <h3 class="text-2xl font-semibold text-red-400 mb-4">Scientific Calculator</h3>
+                    <input id="calcInput" type="text" class="w-full p-3 bg-gray-700 rounded-lg mb-3 text-2xl text-right" placeholder="Enter expression (e.g., sin(30) + 2^3)">
+                    <div class="grid grid-cols-4 gap-2">
+                        <button onclick="appendToCalc('(')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 text-xl font-bold">(</button>
+                        <button onclick="appendToCalc(')')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 text-xl font-bold">)</button>
+                        <button onclick="appendToCalc('^')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 text-xl font-bold">^</button>
+                        <button onclick="clearCalc()" class="p-3 bg-red-700 rounded-lg hover:bg-red-800 text-xl font-bold">C</button>
+                        <button onclick="appendToCalc('7')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">7</button>
+                        <button onclick="appendToCalc('8')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">8</button>
+                        <button onclick="appendToCalc('9')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">9</button>
+                        <button onclick="appendToCalc('/')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 text-xl font-bold">/</button>
+                        <button onclick="appendToCalc('4')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">4</button>
+                        <button onclick="appendToCalc('5')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">5</button>
+                        <button onclick="appendToCalc('6')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">6</button>
+                        <button onclick="appendToCalc('*')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 text-xl font-bold">*</button>
+                        <button onclick="appendToCalc('1')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">1</button>
+                        <button onclick="appendToCalc('2')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">2</button>
+                        <button onclick="appendToCalc('3')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">3</button>
+                        <button onclick="appendToCalc('-')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 text-xl font-bold">-</button>
+                        <button onclick="appendToCalc('0')" class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 text-xl">0</button>
+                        <button onclick="appendToCalc('.')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 text-xl font-bold">.</button>
+                        <button onclick="calculate()" class="p-3 bg-red-600 rounded-lg hover:bg-red-700 text-xl font-bold">=</button>
+                        <button onclick="appendToCalc('+')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 text-xl font-bold">+</button>
+                    </div>
+                    <p id="calcResult" class="mt-4 text-xl font-bold text-red-300"></p>
+                </div>
+                <div class="section-card hover-scale">
+                    <h3 class="text-2xl font-semibold text-red-400 mb-4">GPA/CGPA Calculator</h3>
+                    <input id="gradesInput" type="text" class="w-full p-3 bg-gray-700 rounded-lg mt-2 mb-3" placeholder="Grades (e.g., A,B+,C)">
+                    <input id="creditsInput" type="text" class="w-full p-3 bg-gray-700 rounded-lg mb-3" placeholder="Credits (e.g., 3,3,4)">
+                    <select id="gradingSystem" class="w-full p-3 bg-gray-700 rounded-lg mb-4">
+                        <option value="4.0">4.0 Scale (USA/Standard)</option>
+                        <option value="5.0">5.0 Scale (Some European/Asian)</option>
+                        <option value="10.0">10.0 Scale (European/Indian)</option>
+                    </select>
+                    <button onclick="calculateGPA()" class="mt-2 p-3 bg-red-600 rounded-lg w-full hover:bg-red-700 text-lg font-semibold">Calculate GPA/CGPA</button>
+                    <p id="gpaResult" class="mt-4 text-xl font-bold text-red-300"></p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="currency" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Currency Converter</h2>
+            <div class="section-card">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <select id="fromCurrency" class="p-3 bg-gray-700 rounded-lg"></select>
+                    <select id="toCurrency" class="p-3 bg-gray-700 rounded-lg"></select>
+                    <input id="amount" type="number" class="p-3 bg-gray-700 rounded-lg" placeholder="Amount" value="1">
+                </div>
+                <button onclick="convertCurrency()" class="mt-2 p-3 bg-red-600 rounded-lg w-full hover:bg-red-700 text-lg font-semibold">Convert</button>
+                <p id="currencyResult" class="mt-4 text-xl font-bold text-red-300 text-center"></p>
+                <p class="text-sm text-gray-500 mt-2 text-center">Rates powered by ExchangeRate-API.com</p>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="calendar" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Calendar & To-Do</h2>
+            <div class="section-card">
+                <div id="calendarDisplay" class="mb-6 bg-gray-700 p-4 rounded-lg"></div>
+                <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                    <input id="todoInput" type="text" class="p-3 bg-gray-700 rounded-lg flex-grow text-lg" placeholder="Add a new to-do item...">
+                    <button onclick="addTodo()" class="p-3 bg-red-600 rounded-lg hover:bg-red-700 text-lg font-semibold">Add To-Do</button>
+                </div>
+                <ul id="todoList" class="mt-4 space-y-3"></ul>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="students" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Student Information System</h2>
+
+            <div class="section-card mb-8">
+                <h3 class="text-2xl font-semibold text-red-400 mb-4">Add New Student</h3>
+                <form id="addStudentForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="studentName" class="p-3 rounded-lg" placeholder="Student Name" required>
+                    <input type="text" id="studentID" class="p-3 rounded-lg" placeholder="Student ID" required>
+                    <input type="number" step="0.01" id="studentCGPA" class="p-3 rounded-lg" placeholder="CGPA (e.g., 3.85)">
+                    <input type="number" step="0.01" id="studentGPA" class="p-3 rounded-lg" placeholder="GPA (e.g., 3.90)">
+                    <input type="text" id="studentBlood" class="p-3 rounded-lg" placeholder="Blood Group (e.g., A+)">
+                    <input type="text" id="studentHobbies" class="p-3 rounded-lg" placeholder="Hobbies (comma-separated)">
+                    <input type="url" id="studentWhatsApp" class="p-3 rounded-lg" placeholder="WhatsApp Link (optional)">
+                    <input type="url" id="studentFacebook" class="p-3 rounded-lg" placeholder="Facebook Link (optional)">
+                    <input type="url" id="studentInstagram" class="p-3 rounded-lg" placeholder="Instagram Link (optional)">
+                    <div class="md:col-span-2">
+                        <label for="studentPic" class="block text-gray-400 mb-2">Profile Picture (Optional)</label>
+                        <input type="file" id="studentPic" accept="image/*" class="p-3 rounded-lg w-full">
+                    </div>
+                    <button type="submit" class="md:col-span-2 p-3 bg-red-600 rounded-lg hover:bg-red-700 text-lg font-semibold">Add Student</button>
+                </form>
+            </div>
+
+            <div id="studentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="media" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Study Materials & Resources</h2>
+            <div class="section-card mb-8">
+                <h3 class="text-2xl font-semibold text-red-400 mb-4">Upload Your Materials (Local)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="uploadPdf" class="block text-gray-400 mb-2">Upload PDF:</label>
+                        <input type="file" id="uploadPdf" accept=".pdf" class="p-3 rounded-lg w-full mb-2">
+                        <button onclick="handleFileUpload('pdf')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 w-full">Add PDF</button>
+                    </div>
+                    <div>
+                        <label for="uploadImage" class="block text-gray-400 mb-2">Upload Image:</label>
+                        <input type="file" id="uploadImage" accept="image/*" class="p-3 rounded-lg w-full mb-2">
+                        <button onclick="handleFileUpload('image')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 w-full">Add Image</button>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="uploadText" class="block text-gray-400 mb-2">Upload Text File:</label>
+                        <input type="file" id="uploadText" accept=".txt" class="p-3 rounded-lg w-full mb-2">
+                        <button onclick="handleFileUpload('text')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 w-full">Add Text</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="section-card">
+                    <h3 class="text-xl font-semibold text-red-400 mb-3">Google Drive Folders</h3>
+                    <ul class="space-y-3">
+                        <li><a href="https://drive.google.com/drive/folders/YOUR_PDF_FOLDER_ID" target="_blank" class="block p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-white flex items-center">
+                            <img src="https://img.icons8.com/color/24/000000/google-drive.png" alt="Drive" class="mr-2"> Course PDFs</a></li>
+                        <li><a href="https://drive.google.com/drive/folders/YOUR_NOTES_FOLDER_ID" target="_blank" class="block p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-white flex items-center">
+                            <img src="https://img.icons8.com/color/24/000000/google-drive.png" alt="Drive" class="mr-2"> Class Notes</a></li>
+                        <li><a href="https://drive.google.com/drive/folders/YOUR_ASSIGNMENT_FOLDER_ID" target="_blank" class="block p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-white flex items-center">
+                            <img src="https://img.icons8.com/color/24/000000/google-drive.png" alt="Drive" class="mr-2"> Assignments</a></li>
+                    </ul>
+                </div>
+                <div class="section-card">
+                    <h3 class="text-xl font-semibold text-red-400 mb-3">Local Uploaded Files</h3>
+                    <div class="flex flex-col space-y-2">
+                        <h4 class="text-lg font-medium text-gray-300">PDFs:</h4>
+                        <ul id="uploadedPdfList" class="list-disc pl-5 text-gray-400"></ul>
+                        <h4 class="text-lg font-medium text-gray-300">Images:</h4>
+                        <ul id="uploadedImageList" class="list-disc pl-5 text-gray-400"></ul>
+                        <h4 class="text-lg font-medium text-gray-300">Text Files:</h4>
+                        <ul id="uploadedTextList" class="list-disc pl-5 text-gray-400"></ul>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <h3 class="text-xl font-semibold text-red-400 mb-3">External Study Links</h3>
+                    <ul class="space-y-3">
+                        <li><a href="https://khanacademy.org" target="_blank" class="block p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-white flex items-center">
+                            <img src="https://img.icons8.com/color/24/000000/khan-academy.png" alt="Khan Academy" class="mr-2"> Khan Academy</a></li>
+                        <li><a href="https://coursera.org" target="_blank" class="block p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-white flex items-center">
+                            <img src="https://img.icons8.com/color/24/000000/coursera.png" alt="Coursera" class="mr-2"> Coursera</a></li>
+                        <li><a href="https://edx.org" target="_blank" class="block p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-white flex items-center">
+                            <img src="https://img.icons8.com/color/24/000000/edx.png" alt="EdX" class="mr-2"> edX</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="games" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Games</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="section-card hover-scale">
+                    <h3 class="text-2xl font-semibold text-red-400 mb-3">3D Chess (Conceptual)</h3>
+                    <p class="text-gray-400 mb-4">A visualization of a 3D Chess piece. Full game integration requires advanced development.</p>
+                    <canvas id="chessCanvas" class="w-full h-64 rounded-lg bg-gray-900 border border-gray-700"></canvas>
+                </div>
+                <div class="section-card hover-scale">
+                    <h3 class="text-2xl font-semibold text-red-400 mb-3">Flappy Bird (Conceptual)</h3>
+                    <p class="text-gray-400 mb-4">A simple animated placeholder for a Flappy Bird game.</p>
+                    <canvas id="flappyCanvas" class="w-full h-64 rounded-lg bg-gray-900 border border-gray-700"></canvas>
+                </div>
+                <div class="section-card hover-scale">
+                    <h3 class="text-2xl font-semibold text-red-400 mb-3">Other Games</h3>
+                    <ul class="list-disc pl-5 mt-4 space-y-2">
+                        <li><span class="text-gray-400">Ludo (Placeholder)</span></li>
+                        <li><span class="text-gray-400">Uno (Placeholder)</span></li>
+                        <li><span class="text-gray-400">Crossing Road (Placeholder)</span></li>
+                    </ul>
+                    <p class="text-sm text-gray-500 mt-4">These games require dedicated game engine integration or full custom development.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="internet" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">How the Internet Works & Its History</h2>
+            <div class="section-card">
+                <h3 class="text-2xl font-semibold text-red-400 mb-4">Journey of Connectivity</h3>
+                <p class="text-lg text-gray-300 mt-2 leading-relaxed">
+                    The internet began as **ARPANET** in the 1960s, a U.S. Department of Defense project aimed at creating a decentralized communication network resistant to disruptions. By the 1980s, the adoption of **TCP/IP protocols** standardized communication, paving the way for global interconnectivity. The true revolution came in 1989 with **Tim Berners-Lee's** invention of the **World Wide Web**, making information accessible via user-friendly browsers. Today, the internet operates as a vast "network of networks," using sophisticated infrastructure like **routers**, **servers**, and various **protocols** (HTTP, DNS, etc.) to transmit data across the globe. Data is broken into small **packets**, which travel independently through fiber-optic cables, satellites, and wireless networks, ensuring robust and redundant communication.
+                </p>
+                <h4 class="text-xl font-semibold text-red-400 mt-6 mb-3">Key Milestones in Internet History</h4>
+                <ul class="list-disc pl-8 mt-2 text-gray-300 space-y-2">
+                    <li>**1969:** ARPANET, the precursor to the internet, connects its first four university nodes.</li>
+                    <li>**1983:** The **Domain Name System (DNS)** is introduced, making internet addresses human-readable.</li>
+                    <li>**1989:** Tim Berners-Lee proposes the World Wide Web, laying the foundation for modern web Browse.</li>
+                    <li>**1993:** The **Mosaic web browser** is released, popularizing the World Wide Web for general public use.</li>
+                    <li>**Mid-1990s:** The commercialization of the internet begins, leading to rapid expansion.</li>
+                    <li>**2000s:** The widespread adoption of **broadband internet** and the rise of mobile internet transform connectivity.</li>
+                    <li>**2010s-Present:** Emergence of **5G**, **Internet of Things (IoT)**, and cloud computing further expand the internet's reach and capabilities.</li>
+                </ul>
+                <h4 class="text-xl font-semibold text-red-400 mt-6 mb-3">How Data Travels on the Internet: A Simplified View</h4>
+                <p class="mt-2 text-gray-300 leading-relaxed">
+                    The internet fundamentally relies on a **client-server model**. When you type a website address (e.g., `google.com`), your device (the **client**) sends a request. **DNS servers** translate this human-readable address into an **IP address** (e.g., `172.217.160.142`). Your request, now with the IP address, is broken into small **packets** and sent through a series of **routers** and **internet service providers (ISPs)**, which direct the packets along the most efficient path. These packets eventually reach the **server** hosting the website. The server processes your request and sends the requested data back to your device, also in packets, which are then reassembled to display the webpage. **HTTP/HTTPS** protocols govern this communication for web pages, while other protocols handle different types of data.
+                </p>
+                <canvas id="internetCanvas" class="w-full h-96 mt-6 rounded-lg bg-gray-900 border border-gray-700"></canvas>
+                <p class="text-sm text-gray-500 mt-2 text-center">Visual representation of data flow and network nodes.</p>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="github" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">How GitHub Works & Git Essentials</h2>
+            <div class="section-card">
+                <h3 class="text-2xl font-semibold text-red-400 mb-4">The Power of Version Control</h3>
+                <p class="text-lg text-gray-300 mt-2 leading-relaxed">
+                    **GitHub** is the world's leading platform for **version control** and collaborative software development. It's built on **Git**, a powerful distributed version control system created by **Linus Torvalds** (the creator of Linux). GitHub allows multiple developers to work on the same project simultaneously without overwriting each other's changes. It provides robust tools to track every modification, revert to previous versions, and manage complex codebases efficiently.
+                </p>
+                <h4 class="text-xl font-semibold text-red-400 mt-6 mb-3">Understanding the GitHub Workflow</h4>
+                <p class="mt-2 text-gray-300 leading-relaxed">
+                    The core of GitHub is the **repository (repo)**, which is essentially a project's folder containing all its files and revision history. Developers typically **clone** a repository to their local machine, make changes, and then **commit** those changes locally. To share updates, they **push** their commits to the remote repository on GitHub. For collaborative work, **branches** are used to isolate new features or bug fixes from the main codebase. Once a feature is complete, a **pull request** is opened, allowing team members to review the code before it's **merged** into the main branch. GitHub also offers features like **Issues** for bug tracking and task management, and **GitHub Actions** for automating workflows like continuous integration and deployment (CI/CD).
+                </p>
+                <h4 class="text-xl font-semibold text-red-400 mt-6 mb-3">Essential Git Commands: Your Cheat Sheet</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 text-gray-300">
+                    <div>
+                        <p class="text-lg font-bold text-red-300">Setup & Configuration:</p>
+                        <ul class="list-disc pl-6 mt-2 space-y-1">
+                            <li><code>git init</code>: Initializes a new Git repository in the current directory.</li>
+                            <li><code>git clone [url]</code>: Downloads an existing repository from GitHub.</li>
+                            <li><code>git config --global user.name "Your Name"</code>: Sets your global Git username.</li>
+                            <li><code>git config --global user.email "your.email@example.com"</code>: Sets your global Git email.</li>
+                        </ul>
+                        <p class="text-lg font-bold text-red-300 mt-4">Basic Workflow:</p>
+                        <ul class="list-disc pl-6 mt-2 space-y-1">
+                            <li><code>git status</code>: Shows the status of your working directory and staging area.</li>
+                            <li><code>git add [file]</code>: Stages a specific file for the next commit.</li>
+                            <li><code>git add .</code>: Stages all modified and new files in the current directory.</li>
+                            <li><code>git commit -m "Your commit message"</code>: Records staged changes to the repository history.</li>
+                            <li><code>git push origin [branch-name]</code>: Uploads local branch commits to the remote repository.</li>
+                            <li><code>git pull</code>: Fetches and integrates changes from the remote repository to your current branch.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-red-300">Branching & Merging:</p>
+                        <ul class="list-disc pl-6 mt-2 space-y-1">
+                            <li><code>git branch</code>: Lists all local branches.</li>
+                            <li><code>git branch [new-branch-name]</code>: Creates a new branch.</li>
+                            <li><code>git checkout [branch-name]</code>: Switches to a different branch.</li>
+                            <li><code>git checkout -b [new-branch-name]</code>: Creates and switches to a new branch.</li>
+                            <li><code>git merge [branch-to-merge]</code>: Merges the specified branch into your current branch.</li>
+                            <li><code>git branch -d [branch-name]</code>: Deletes a local branch (only if merged).</li>
+                        </ul>
+                        <p class="text-lg font-bold text-red-300 mt-4">History & Undoing:</p>
+                        <ul class="list-disc pl-6 mt-2 space-y-1">
+                            <li><code>git log</code>: Displays commit history.</li>
+                            <li><code>git reset [file]</code>: Unstages a file while keeping changes.</li>
+                            <li><code>git reset --hard [commit-hash]</code>: Reverts to a specific commit, discarding all later changes (use with caution!).</li>
+                        </ul>
+                    </div>
+                </div>
+                <canvas id="githubCanvas" class="w-full h-96 mt-6 rounded-lg bg-gray-900 border border-gray-700"></canvas>
+                <p class="text-sm text-gray-500 mt-2 text-center">Visual representation of Git's branching and merging.</p>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="math" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Differential Equation Solver</h2>
+            <div class="section-card">
+                <h3 class="text-2xl font-semibold text-red-400 mb-4">Solve Your Equations</h3>
+                <p class="text-gray-400 mb-4">Enter your differential equation or upload an image/text for analysis. (Note: Full analytical solutions require advanced computational mathematics libraries, which are beyond simple client-side JS. This will be a conceptual tool.)</p>
+                <input id="equationInput" type="text" class="p-3 bg-gray-700 rounded-lg w-full mb-3 text-lg" placeholder="e.g., dy/dx + 2y = 0 or y'' + y = 0">
+                <label for="equationImageInput" class="block text-gray-400 mb-2">Upload Equation Image (for OCR concept):</label>
+                <input id="equationImageInput" type="file" accept="image/*" class="p-3 bg-gray-700 rounded-lg w-full mb-3">
+                <label for="equationTextInput" class="block text-gray-400 mb-2">Upload Equation Text File:</label>
+                <input id="equationTextInput" type="file" accept=".txt" class="p-3 bg-gray-700 rounded-lg w-full mb-3">
+                <select id="equationType" class="p-3 bg-gray-700 rounded-lg w-full mb-4 text-lg">
+                    <option value="linear">Linear First-Order</option>
+                    <option value="separable">Separable</option>
+                    <option value="exact">Exact</option>
+                    <option value="second_order_constant">Second-Order Homogeneous (Constant Coeff.)</option>
+                    <option value="numerical">Numerical Approximation</option>
+                </select>
+                <button onclick="solveEquation()" class="mt-2 p-3 bg-red-600 rounded-lg w-full hover:bg-red-700 text-lg font-semibold">Solve Equation</button>
+                <p id="equationResult" class="mt-4 text-xl font-bold text-red-300"></p>
+                <div id="equationImagePreview" class="mt-4 hidden text-center">
+                    <img id="uploadedEquationImg" class="max-w-full h-auto rounded-lg mx-auto" alt="Uploaded Equation Image">
+                    <p class="text-sm text-gray-500 mt-2">Preview of uploaded image.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="media-window" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Your Personal Media Window</h2>
+            <div class="section-card mb-8">
+                <h3 class="text-2xl font-semibold text-red-400 mb-4">Upload Your Media (Local Preview)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="uploadPersonalImage" class="block text-gray-400 mb-2">Upload Images:</label>
+                        <input type="file" id="uploadPersonalImage" accept="image/*" multiple class="p-3 rounded-lg w-full mb-2">
+                        <button onclick="handlePersonalFileUpload('image')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 w-full">Add Images</button>
+                    </div>
+                    <div>
+                        <label for="uploadPersonalVideo" class="block text-gray-400 mb-2">Upload Videos:</label>
+                        <input type="file" id="uploadPersonalVideo" accept="video/*" multiple class="p-3 rounded-lg w-full mb-2">
+                        <button onclick="handlePersonalFileUpload('video')" class="p-3 bg-gray-600 rounded-lg hover:bg-red-500 w-full">Add Videos</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-8">
+                <div class="section-card">
+                    <h3 class="text-xl font-semibold text-red-400 mb-3">Your Image Gallery</h3>
+                    <div id="personalImageGallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+                        </div>
+                    <p id="noImagesMessage" class="text-gray-500 text-center mt-4 hidden">No images uploaded yet.</p>
+                </div>
+                <div class="section-card">
+                    <h3 class="text-xl font-semibold text-red-400 mb-3">Your Video Collection</h3>
+                    <div id="personalVideoCollection" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        </div>
+                    <p id="noVideosMessage" class="text-gray-500 text-center mt-4 hidden">No videos uploaded yet.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-8 border-gray-700">
+
+        <section id="admin" class="py-8">
+            <h2 class="text-4xl font-bold text-red-500 mb-6 border-b border-red-700 pb-2">Admin Tools & Configurations</h2>
+            <div class="section-card">
+                <p class="text-lg text-gray-400 mb-4">This section is for system administrators and advanced users. It will contain options to manage user accounts, customize core system settings, and monitor network activity. (Requires backend integration for actual functionality).</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-lg font-semibold">User Management</button>
+                    <button class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-lg font-semibold">System Logs</button>
+                    <button class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-lg font-semibold">Database Backup</button>
+                    <button class="p-3 bg-gray-700 rounded-lg hover:bg-red-600 hover-scale text-lg font-semibold">Network Monitor</button>
+                </div>
+                <p class="text-sm text-gray-500 mt-4 text-center">Actual functionality for these tools requires server-side programming and robust security measures.</p>
+            </div>
+        </section>
+
+        <footer class="py-12 text-center bg-gray-900 mt-12 rounded-t-lg shadow-inner border-t border-gray-700">
+            <h3 class="text-2xl font-bold text-red-500 mb-6">Connect with Shadow Base</h3>
+            <div class="flex justify-center gap-8 flex-wrap">
+                <a href="https://x.com" target="_blank" class="social-icon text-gray-400 hover:text-red-500 transition-colors duration-300" aria-label="Visit us on X">
+                    <img src="https://img.icons8.com/ios-filled/48/000000/twitterx.png" alt="X" class="w-12 h-12 rounded-full p-1 bg-gray-800">
+                </a>
+                <a href="https://facebook.com" target="_blank" class="social-icon text-gray-400 hover:text-red-500 transition-colors duration-300" aria-label="Visit us on Facebook">
+                    <img src="https://img.icons8.com/ios-filled/48/000000/facebook-new.png" alt="Facebook" class="w-12 h-12 rounded-full p-1 bg-gray-800">
+                </a>
+                <a href="https://instagram.com" target="_blank" class="social-icon text-gray-400 hover:text-red-500 transition-colors duration-300" aria-label="Visit us on Instagram">
+                    <img src="https://img.icons8.com/ios-filled/48/000000/instagram-new.png" alt="Instagram" class="w-12 h-12 rounded-full p-1 bg-gray-800">
+                </a>
+                <a href="https://linkedin.com" target="_blank" class="social-icon text-gray-400 hover:text-red-500 transition-colors duration-300" aria-label="Visit us on LinkedIn">
+                    <img src="https://img.icons8.com/ios-filled/48/000000/linkedin.png" alt="LinkedIn" class="w-12 h-12 rounded-full p-1 bg-gray-800">
+                </a>
+                <a href="https://github.com" target="_blank" class="social-icon text-gray-400 hover:text-red-500 transition-colors duration-300" aria-label="Visit us on GitHub">
+                    <img src="https://img.icons8.com/ios-filled/48/000000/github.png" alt="GitHub" class="w-12 h-12 rounded-full p-1 bg-gray-800">
+                </a>
+                <a href="https://wa.me/YOUR_PHONE_NUMBER" target="_blank" class="social-icon text-gray-400 hover:text-red-500 transition-colors duration-300" aria-label="Connect on WhatsApp">
+                    <img src="https://img.icons8.com/ios-filled/48/000000/whatsapp--v1.png" alt="WhatsApp" class="w-12 h-12 rounded-full p-1 bg-gray-800">
+                </a>
+                <a href="https://discord.com" target="_blank" class="social-icon text-gray-400 hover:text-red-500 transition-colors duration-300" aria-label="Join our Discord">
+                    <img src="https://img.icons8.com/ios-filled/48/000000/discord--v1.png" alt="Discord" class="w-12 h-12 rounded-full p-1 bg-gray-800">
+                </a>
+            </div>
+            <p class="mt-8 text-md text-gray-500">© 2025 Shadow Base. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <canvas id="canvas" class="fixed top-0 left-0 w-full h-full"></canvas>
+
+    <script>
+        // --- Core UI Functionality ---
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('theme-dark');
+            document.body.classList.toggle('theme-red');
+            themeToggle.innerHTML = document.body.classList.contains('theme-dark') ? '<span class="text-2xl" role="img" aria-label="Moon Icon">🌙</span>' : '<span class="text-2xl" role="img" aria-label="Red Circle Icon">🔴</span>';
+        });
+
+        // Sidebar Toggle for Mobile
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.ml-0.md\\:ml-64');
+
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            mainContent.classList.add('md:ml-64'); // Maintain desktop margin
+        });
+
+        closeSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('translate-x-0');
+            sidebar.classList.add('-translate-x-full');
+        });
+
+        // Close sidebar when a navigation link is clicked (for mobile UX)
+        sidebar.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 768) { // Only for mobile
+                    sidebar.classList.remove('translate-x-0');
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
+
+        // --- 3D Background Animations (Three.js) ---
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.position.z = 15;
+
+        // Particle Textures (Using placeholder images)
+        const smokeTexture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/sprites/cloud.png');
+        const sparkTexture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/sprites/spark1.png');
+
+        // Smokey Particles
+        const smokeParticles = [];
+        const smokeMaterial = new THREE.MeshBasicMaterial({ map: smokeTexture, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending });
+        for (let i = 0; i < 250; i++) {
+            const geometry = new THREE.PlaneGeometry(3, 3); // Use plane for smoke
+            const particle = new THREE.Mesh(geometry, smokeMaterial);
+            particle.position.set(Math.random() * 60 - 30, Math.random() * 60 - 30, Math.random() * 20 - 10);
+            scene.add(particle);
+            smokeParticles.push(particle);
+        }
+
+        // Falling Balls (Red/Black)
+        const balls = [];
+        for (let i = 0; i < 120; i++) {
+            const geometry = new THREE.SphereGeometry(0.15 + Math.random() * 0.1, 16, 16);
+            const material = new THREE.MeshPhongMaterial({
+                color: Math.random() > 0.5 ? 0xff0000 : 0x0a0a0a, // Red or very dark grey
+                shininess: 80,
+                emissive: Math.random() > 0.7 ? 0x220000 : 0x000000 // Subtle red glow for some
+            });
+            const ball = new THREE.Mesh(geometry, material);
+            ball.position.set(Math.random() * 40 - 20, 20 + Math.random() * 10, Math.random() * 10 - 5);
+            scene.add(ball);
+            balls.push(ball);
+        }
+
+        // Sparkle Effects
+        const sparkles = [];
+        const sparkleMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.1,
+            map: sparkTexture,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        const sparkleGeometry = new THREE.BufferGeometry();
+        const positions = [];
+        for (let i = 0; i < 200; i++) {
+            positions.push(Math.random() * 40 - 20, Math.random() * 40 - 20, Math.random() * 10 - 5);
+        }
+        sparkleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        const sparkleParticles = new THREE.Points(sparkleGeometry, sparkleMaterial);
+        scene.add(sparkleParticles);
+
+        // Lights for the scene
+        const pointLight1 = new THREE.PointLight(0xff0000, 1.2, 50);
+        pointLight1.position.set(0, 5, 10);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0x0000ff, 0.8, 50);
+        pointLight2.position.set(10, -5, 5);
+        scene.add(pointLight2);
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5); // Soft ambient light
+        scene.add(ambientLight);
+
+        function animateBackground() {
+            requestAnimationFrame(animateBackground);
+
+            // Animate smoke particles
+            smokeParticles.forEach(p => {
+                p.position.y += 0.05; // Move upwards
+                p.rotation.z += 0.005; // Rotate slowly
+                if (p.position.y > 20) { // Reset if too high
+                    p.position.y = -20;
+                    p.position.x = Math.random() * 60 - 30; // Random X reset
+                }
+                // Subtle opacity and scale variation
+                p.material.opacity = 0.15 + Math.sin(Date.now() * 0.0005 + p.position.x * 0.1) * 0.05;
+                p.scale.setScalar(1 + Math.cos(Date.now() * 0.0007 + p.position.y * 0.1) * 0.1);
+            });
+
+            // Animate falling balls
+            balls.forEach(b => {
+                b.position.y -= 0.1; // Fall downwards
+                b.rotation.x += 0.03;
+                b.rotation.y += 0.015;
+                if (b.position.y < -20) { // Reset if fallen off screen
+                    b.position.y = 20 + Math.random() * 5;
+                    b.position.x = Math.random() * 40 - 20;
+                    b.position.z = Math.random() * 10 - 5;
+                }
+            });
+
+            // Animate sparkles
+            sparkleParticles.geometry.attributes.position.array.forEach((val, i) => {
+                if (i % 3 === 1) { // Y-coordinate
+                    sparkleParticles.geometry.attributes.position.array[i] += 0.02;
+                    if (sparkleParticles.geometry.attributes.position.array[i] > 20) {
+                        sparkleParticles.geometry.attributes.position.array[i] = -20;
+                    }
+                }
+            });
+            sparkleParticles.geometry.attributes.position.needsUpdate = true;
+
+
+            renderer.render(scene, camera);
+        }
+        animateBackground();
+
+        // Resize Handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- Calculators ---
+
+        // Scientific Calculator
+        function appendToCalc(value) {
+            document.getElementById('calcInput').value += value;
+        }
+        function clearCalc() {
+            document.getElementById('calcInput').value = '';
+            document.getElementById('calcResult').textContent = '';
+        }
+        function calculate() {
+            try {
+                // Replace common functions for math.js compatibility if needed (e.g., deg to rad for sin/cos/tan)
+                let expression = document.getElementById('calcInput').value;
+                expression = expression.replace(/sin\(([^)]+)\)/g, 'sin(unit("deg", $1))');
+                expression = expression.replace(/cos\(([^)]+)\)/g, 'cos(unit("deg", $1))');
+                expression = expression.replace(/tan\(([^)]+)\)/g, 'tan(unit("deg", $1))');
+
+                const result = math.evaluate(expression);
+                document.getElementById('calcResult').textContent = `Result: ${typeof result === 'object' && result.value !== undefined ? result.value.toFixed(4) : result.toFixed(4)}`;
+            } catch (e) {
+                document.getElementById('calcResult').textContent = 'Error: Invalid Expression';
+                console.error("Calculator Error:", e);
+            }
+        }
+
+        // GPA/CGPA Calculator
+        function calculateGPA() {
+            const gradesInput = document.getElementById('gradesInput').value.trim();
+            const creditsInput = document.getElementById('creditsInput').value.trim();
+            const scale = parseFloat(document.getElementById('gradingSystem').value);
+
+            if (!gradesInput || !creditsInput) {
+                document.getElementById('gpaResult').textContent = 'Please enter both grades and credits.';
+                return;
+            }
+
+            const grades = gradesInput.split(',').map(g => g.trim().toUpperCase());
+            const credits = creditsInput.split(',').map(Number);
+
+            if (grades.length !== credits.length) {
+                document.getElementById('gpaResult').textContent = 'Error: Number of grades must match number of credits.';
+                return;
+            }
+
+            const gradeToPoints = {};
+            if (scale === 4.0) {
+                Object.assign(gradeToPoints, { 'A+': 4.0, 'A': 4.0, 'A-': 3.7, 'B+': 3.3, 'B': 3.0, 'B-': 2.7, 'C+': 2.3, 'C': 2.0, 'C-': 1.7, 'D+': 1.3, 'D': 1.0, 'F': 0.0 });
+            } else if (scale === 5.0) {
+                Object.assign(gradeToPoints, { 'A+': 5.0, 'A': 5.0, 'A-': 4.5, 'B+': 4.0, 'B': 3.5, 'B-': 3.0, 'C+': 2.5, 'C': 2.0, 'C-': 1.5, 'D+': 1.0, 'D': 0.5, 'F': 0.0 });
+            } else if (scale === 10.0) {
+                Object.assign(gradeToPoints, { 'A+': 10.0, 'A': 9.5, 'A-': 9.0, 'B+': 8.5, 'B': 8.0, 'B-': 7.5, 'C+': 7.0, 'C': 6.5, 'C-': 6.0, 'D+': 5.5, 'D': 5.0, 'F': 0.0 });
+            }
+
+            let totalPoints = 0;
+            let totalCredits = 0;
+            let isValid = true;
+
+            for (let i = 0; i < grades.length; i++) {
+                const grade = grades[i];
+                const credit = credits[i];
+
+                if (isNaN(credit) || credit <= 0) {
+                    isValid = false;
+                    document.getElementById('gpaResult').textContent = `Error: Invalid credit value for grade '${grade}'`;
+                    break;
+                }
+                if (gradeToPoints[grade] === undefined) {
+                    isValid = false;
+                    document.getElementById('gpaResult').textContent = `Error: Invalid grade '${grade}'. Please check your grading system.`;
+                    break;
+                }
+
+                totalPoints += gradeToPoints[grade] * credit;
+                totalCredits += credit;
+            }
+
+            if (isValid) {
+                const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 0;
+                document.getElementById('gpaResult').textContent = `Your GPA/CGPA: ${gpa} (on ${scale} Scale)`;
+            }
+        }
+
+        // --- Currency Converter ---
+        const currencies = [
+            'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'HKD', 'NZD', 'SGD',
+            'INR', 'BDT', 'PKR', 'LKR', 'NPR', 'AFN', 'IDR', 'MYR', 'PHP', 'THB', 'VND',
+            'AED', 'SAR', 'QAR', 'KWD', 'BHD', 'OMR', 'ILS', 'TRY', 'RUB', 'ZAR', 'EGP',
+            'NGN', 'GHS', 'KES', 'UGX', 'TZS', 'XOF', 'XAF', 'MAD', 'DZD', 'CLP', 'ARS',
+            'BRL', 'COP', 'MXN', 'PEN', 'VES', 'SEK', 'NOK', 'DKK', 'PLN', 'HUF', 'CZK',
+            'BGN', 'RON', 'HRK', 'RSD', 'UAH', 'KZT', 'UZS', 'AZN', 'GEL', 'AMD', 'MDL',
+            'ISK', 'FJD', 'PGK', 'VUV', 'SBD', 'TOP', 'WST', 'XCD', 'BBD', 'BZD', 'CRC',
+            'DOP', 'GTQ', 'HNL', 'JMD', 'NIO', 'PAB', 'SVC', 'TTD', 'UYU', 'CUC', 'CUP'
+        ]; // More comprehensive list
+
+        const fromSelect = document.getElementById('fromCurrency');
+        const toSelect = document.getElementById('toCurrency');
+
+        currencies.sort().forEach(c => { // Sort for better UX
+            const option1 = document.createElement('option');
+            option1.value = c;
+            option1.textContent = c;
+            fromSelect.appendChild(option1);
+
+            const option2 = document.createElement('option');
+            option2.value = c;
+            option2.textContent = c;
+            toSelect.appendChild(option2);
+        });
+
+        // Set default values for common currencies
+        fromSelect.value = 'BDT'; // Default From
+        toSelect.value = 'USD'; // Default To
+
+        async function convertCurrency() {
+            const from = fromSelect.value;
+            const to = toSelect.value;
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (isNaN(amount) || amount <= 0) {
+                document.getElementById('currencyResult').textContent = 'Please enter a valid amount.';
+                return;
+            }
+
+            try {
+                // Using a free API key (publicly available for testing, replace for production)
+                const apiKey = 'YOUR_EXCHANGERATE_API_KEY'; // Sign up at exchangerate-api.com for a free key
+                const response = await axios.get(`https://v6.exchangerate-api.com/v6/${apiKey}/latest/${from}`);
+                const data = response.data;
+
+                if (data.result === 'error') {
+                    throw new Error(data['error-type'] || 'Unknown API Error');
+                }
+
+                const rate = data.conversion_rates[to];
+                if (!rate) {
+                    throw new Error(`Conversion rate for ${to} not found.`);
+                }
+
+                const result = (amount * rate).toFixed(2);
+                document.getElementById('currencyResult').textContent = `${amount} ${from} = ${result} ${to}`;
+            } catch (e) {
+                document.getElementById('currencyResult').textContent = `Error: ${e.message}. Could not fetch rates.`;
+                console.error("Currency conversion error:", e);
+            }
+        }
+
+        // --- Calendar & To-Do List ---
+
+        const todoList = document.getElementById('todoList');
+        let todos = JSON.parse(localStorage.getItem('todos') || '[]'); // Load from local storage
+
+        function renderCalendar() {
+            const date = new Date();
+            const currentMonth = date.getMonth();
+            const currentYear = date.getFullYear();
+
+            const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // 0 for Sunday, 1 for Monday etc.
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            let calendarHTML = `<h3 class="text-3xl font-bold text-red-300 text-center mb-4">${date.toLocaleString('default', { month: 'long' })} ${currentYear}</h3>`;
+            calendarHTML += `<div class="grid grid-cols-7 text-center font-bold text-red-200 mb-2">
+                                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                             </div>`;
+            calendarHTML += `<div class="grid grid-cols-7 gap-1 text-center">`;
+
+            // Add empty divs for days before the first day of the month
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                calendarHTML += `<div class="p-2"></div>`;
+            }
+
+            // Add actual days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isToday = day === date.getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
+                calendarHTML += `<div class="p-2 rounded-lg ${isToday ? 'bg-red-700 text-white font-bold' : 'bg-gray-800 hover:bg-gray-700 cursor-pointer'}">${day}</div>`;
+            }
+            calendarHTML += '</div>';
+            document.getElementById('calendarDisplay').innerHTML = calendarHTML;
+        }
+
+        function renderTodos() {
+            todoList.innerHTML = ''; // Clear existing list
+            if (todos.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'p-3 bg-gray-700 rounded-lg text-center text-gray-400';
+                li.textContent = 'No to-do items yet. Add one!';
+                todoList.appendChild(li);
+                return;
+            }
+            todos.forEach((todo, index) => {
+                const li = document.createElement('li');
+                li.className = 'p-3 bg-gray-700 rounded-lg flex justify-between items-center text-lg';
+                li.innerHTML = `
+                    <span class="${todo.completed ? 'line-through text-gray-500' : 'text-white'} flex-grow cursor-pointer" onclick="toggleTodoComplete(${index})">${todo.text}</span>
+                    <div class="flex space-x-2">
+                        <button onclick="editTodo(${index})" class="p-2 bg-blue-600 rounded-lg text-sm hover:bg-blue-700">Edit</button>
+                        <button onclick="deleteTodo(${index})" class="p-2 bg-red-600 rounded-lg text-sm hover:bg-red-700">Delete</button>
+                    </div>
+                `;
+                todoList.appendChild(li);
+            });
+        }
+
+        function addTodo() {
+            const todoInput = document.getElementById('todoInput');
+            const todoText = todoInput.value.trim();
+            if (todoText) {
+                todos.push({ text: todoText, completed: false });
+                localStorage.setItem('todos', JSON.stringify(todos));
+                todoInput.value = '';
+                renderTodos();
+            }
+        }
+
+        function toggleTodoComplete(index) {
+            todos[index].completed = !todos[index].completed;
+            localStorage.setItem('todos', JSON.stringify(todos));
+            renderTodos();
+        }
+
+        function editTodo(index) {
+            const newText = prompt('Edit your to-do item:', todos[index].text);
+            if (newText !== null && newText.trim() !== '') {
+                todos[index].text = newText.trim();
+                localStorage.setItem('todos', JSON.stringify(todos));
+                renderTodos();
+            }
+        }
+
+        function deleteTodo(index) {
+            if (confirm('Are you sure you want to delete this to-do item?')) {
+                todos.splice(index, 1);
+                localStorage.setItem('todos', JSON.stringify(todos));
+                renderTodos();
+            }
+        }
+
+        renderCalendar();
+        renderTodos();
+
+        // --- Student Information System ---
+        let students = JSON.parse(localStorage.getItem('students') || '[]');
+
+        const addStudentForm = document.getElementById('addStudentForm');
+        const studentListDiv = document.getElementById('studentList');
+
+        function renderStudents() {
+            studentListDiv.innerHTML = ''; // Clear current display
+            if (students.length === 0) {
+                studentListDiv.innerHTML = `<div class="md:col-span-3 section-card text-center text-gray-400">No student data added yet. Use the form above to add one!</div>`;
+                return;
+            }
+
+            students.forEach((student, index) => {
+                const studentCard = document.createElement('div');
+                studentCard.className = 'section-card hover-scale';
+                studentCard.innerHTML = `
+                    <div class="flex flex-col items-center">
+                        <img src="${student.pic || 'https://via.placeholder.com/150?text=Student'}" alt="${student.name}" class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-red-500 mb-4">
+                        <h3 class="text-2xl font-bold text-red-400 mb-1">${student.name}</h3>
+                        <p class="text-gray-300"><strong>ID:</strong> ${student.id}</p>
+                        <p class="text-gray-300"><strong>CGPA:</strong> ${student.cgpa || 'N/A'}</p>
+                        <p class="text-gray-300"><strong>GPA:</strong> ${student.gpa || 'N/A'}</p>
+                        <p class="text-gray-300"><strong>Blood Group:</strong> ${student.blood || 'N/A'}</p>
+                        <p class="text-gray-300"><strong>Hobbies:</strong> ${student.hobbies || 'N/A'}</p>
+                        <div class="flex gap-3 mt-4">
+                            ${student.whatsapp ? `<a href="${student.whatsapp}" target="_blank" class="text-red-500 hover:underline">WhatsApp</a>` : ''}
+                            ${student.facebook ? `<a href="${student.facebook}" target="_blank" class="text-red-500 hover:underline">Facebook</a>` : ''}
+                            ${student.instagram ? `<a href="${student.instagram}" target="_blank" class="text-red-500 hover:underline">Instagram</a>` : ''}
+                        </div>
+                        <div class="flex gap-2 mt-4">
+                            <button onclick="editStudent(${index})" class="p-2 bg-blue-600 rounded-lg text-sm hover:bg-blue-700">Edit</button>
+                            <button onclick="deleteStudent(${index})" class="p-2 bg-red-600 rounded-lg text-sm hover:bg-red-700">Delete</button>
+                        </div>
+                    </div>
+                `;
+                studentListDiv.appendChild(studentCard);
+            });
+        }
+
+        addStudentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newStudent = {
+                name: document.getElementById('studentName').value,
+                id: document.getElementById('studentID').value,
+                cgpa: document.getElementById('studentCGPA').value,
+                gpa: document.getElementById('studentGPA').value,
+                blood: document.getElementById('studentBlood').value,
+                hobbies: document.getElementById('studentHobbies').value,
+                whatsapp: document.getElementById('studentWhatsApp').value,
+                facebook: document.getElementById('studentFacebook').value,
+                instagram: document.getElementById('studentInstagram').value,
+                pic: '' // Will be updated by FileReader
+            };
+
+            const studentPicFile = document.getElementById('studentPic').files[0];
+            if (studentPicFile) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    newStudent.pic = event.target.result;
+                    students.push(newStudent);
+                    localStorage.setItem('students', JSON.stringify(students));
+                    renderStudents();
+                    addStudentForm.reset();
+                };
+                reader.readAsDataURL(studentPicFile);
+            } else {
+                students.push(newStudent);
+                localStorage.setItem('students', JSON.stringify(students));
+                renderStudents();
+                addStudentForm.reset();
+            }
+        });
+
+        function editStudent(index) {
+            const student = students[index];
+            document.getElementById('studentName').value = student.name;
+            document.getElementById('studentID').value = student.id;
+            document.getElementById('studentCGPA').value = student.cgpa;
+            document.getElementById('studentGPA').value = student.gpa;
+            document.getElementById('studentBlood').value = student.blood;
+            document.getElementById('studentHobbies').value = student.hobbies;
+            document.getElementById('studentWhatsApp').value = student.whatsapp;
+            document.getElementById('studentFacebook').value = student.facebook;
+            document.getElementById('studentInstagram').value = student.instagram;
+
+            // Simple replace for now, in a real app, you'd have an "update" button
+            // For this example, we'll just remove and expect them to re-add
+            deleteStudent(index, false); // Delete without re-rendering
+            alert("Student details loaded into the form for editing. Please update and 'Add Student' again. The old entry has been removed.");
+        }
+
+        function deleteStudent(index, doRender = true) {
+            if (confirm('Are you sure you want to delete this student record?')) {
+                students.splice(index, 1);
+                localStorage.setItem('students', JSON.stringify(students));
+                if (doRender) renderStudents();
+            }
+        }
+
+        renderStudents(); // Initial render of students
+
+        // --- Study Materials & Uploads (Local Simulation) ---
+        const uploadedPdfList = document.getElementById('uploadedPdfList');
+        const uploadedImageList = document.getElementById('uploadedImageList');
+        const uploadedTextList = document.getElementById('uploadedTextList');
+
+        // Store file names and URLs in local storage
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedStudyFiles') || '{ "pdf": [], "image": [], "text": [] }');
+
+        function renderUploadedFiles() {
+            uploadedPdfList.innerHTML = '';
+            uploadedImageList.innerHTML = '';
+            uploadedTextList.innerHTML = '';
+
+            if (uploadedFiles.pdf.length === 0) uploadedPdfList.innerHTML = '<li class="text-gray-500">No PDFs uploaded.</li>';
+            uploadedFiles.pdf.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center p-1 bg-gray-800 rounded mb-1';
+                li.innerHTML = `
+                    <a href="${file.url}" target="_blank" class="text-red-300 hover:text-red-500 hover:underline flex items-center">
+                        <img src="https://img.icons8.com/ios-filled/20/000000/pdf.png" alt="PDF icon" class="mr-2"> ${file.name}
+                    </a>
+                    <button onclick="deleteUploadedFile('pdf', ${index})" class="text-red-400 hover:text-red-600 ml-2 text-sm">Delete</button>
+                `;
+                uploadedPdfList.appendChild(li);
+            });
+
+            if (uploadedFiles.image.length === 0) uploadedImageList.innerHTML = '<li class="text-gray-500">No images uploaded.</li>';
+            uploadedFiles.image.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center p-1 bg-gray-800 rounded mb-1';
+                li.innerHTML = `
+                    <a href="${file.url}" target="_blank" class="text-red-300 hover:text-red-500 hover:underline flex items-center">
+                        <img src="https://img.icons8.com/ios-filled/20/000000/image.png" alt="Image icon" class="mr-2"> ${file.name}
+                    </a>
+                    <button onclick="deleteUploadedFile('image', ${index})" class="text-red-400 hover:text-red-600 ml-2 text-sm">Delete</button>
+                `;
+                uploadedImageList.appendChild(li);
+            });
+
+            if (uploadedFiles.text.length === 0) uploadedTextList.innerHTML = '<li class="text-gray-500">No text files uploaded.</li>';
+            uploadedFiles.text.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center p-1 bg-gray-800 rounded mb-1';
+                li.innerHTML = `
+                    <a href="${file.url}" target="_blank" class="text-red-300 hover:text-red-500 hover:underline flex items-center">
+                        <img src="https://img.icons8.com/ios-filled/20/000000/document.png" alt="Text icon" class="mr-2"> ${file.name}
+                    </a>
+                    <button onclick="deleteUploadedFile('text', ${index})" class="text-red-400 hover:text-red-600 ml-2 text-sm">Delete</button>
+                `;
+                uploadedTextList.appendChild(li);
+            });
+        }
+
+        function handleFileUpload(type) {
+            let inputId;
+            if (type === 'pdf') inputId = 'uploadPdf';
+            else if (type === 'image') inputId = 'uploadImage';
+            else if (type === 'text') inputId = 'uploadText';
+            else return;
+
+            const fileInput = document.getElementById(inputId);
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fileObj = {
+                        name: file.name,
+                        url: e.target.result // Base64 or data URL
+                    };
+                    uploadedFiles[type].push(fileObj);
+                    localStorage.setItem('uploadedStudyFiles', JSON.stringify(uploadedFiles));
+                    renderUploadedFiles();
+                    fileInput.value = ''; // Clear the input
+                };
+                reader.readAsDataURL(file); // Read as data URL for local preview
+            } else {
+                alert('Please select a file to upload.');
+            }
+        }
+
+        function deleteUploadedFile(type, index) {
+            if (confirm(`Are you sure you want to delete ${uploadedFiles[type][index].name}?`)) {
+                uploadedFiles[type].splice(index, 1);
+                localStorage.setItem('uploadedStudyFiles', JSON.stringify(uploadedFiles));
+                renderUploadedFiles();
+            }
+        }
+
+        renderUploadedFiles(); // Initial render for study materials
+
+        // --- Games Section (Conceptual 3D and simple 2D) ---
+
+        // 3D Chess (Conceptual)
+        const chessCanvas = document.getElementById('chessCanvas');
+        if (chessCanvas) {
+            const chessScene = new THREE.Scene();
+            const chessCamera = new THREE.PerspectiveCamera(75, chessCanvas.clientWidth / chessCanvas.clientHeight, 0.1, 1000);
+            const chessRenderer = new THREE.WebGLRenderer({ canvas: chessCanvas, alpha: true, antialias: true });
+            chessRenderer.setSize(chessCanvas.clientWidth, chessCanvas.clientHeight);
+            chessCamera.position.z = 2; // Closer for a smaller canvas
+
+            // Chess piece: Simple Kngiht-like shape
+            const geometry = new THREE.CapsuleGeometry(0.3, 0.7, 4, 8); // Capsule for body
+            const material = new THREE.MeshPhongMaterial({ color: 0x880000, shininess: 150 });
+            const chessPiece = new THREE.Mesh(geometry, material);
+            chessScene.add(chessPiece);
+
+            // Add a base
+            const baseGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
+            const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
+            const base = new THREE.Mesh(baseGeometry, baseMaterial);
+            base.position.y = -0.45;
+            chessPiece.add(base);
+
+            const chessLight = new THREE.PointLight(0xffffff, 1.5, 10);
+            chessLight.position.set(0, 1, 2);
+            chessScene.add(chessLight);
+            const chessAmbientLight = new THREE.AmbientLight(0x404040, 0.7);
+            chessScene.add(chessAmbientLight);
+
+            function animateChess() {
+                requestAnimationFrame(animateChess);
+                chessPiece.rotation.y += 0.01; // Slow rotation
+                chessRenderer.render(chessScene, chessCamera);
+            }
+            animateChess();
+
+            window.addEventListener('resize', () => {
+                if (chessCanvas.parentElement) {
+                    const parent = chessCanvas.parentElement;
+                    chessRenderer.setSize(parent.clientWidth, parent.clientHeight);
+                    chessCamera.aspect = parent.clientWidth / parent.clientHeight;
+                    chessCamera.updateProjectionMatrix();
+                }
+            });
+        }
+
+
+        // Flappy Bird (Placeholder 2D Canvas)
+        const flappyCanvas = document.getElementById('flappyCanvas');
+        if (flappyCanvas) {
+            const flappyCtx = flappyCanvas.getContext('2d');
+            flappyCanvas.width = flappyCanvas.clientWidth;
+            flappyCanvas.height = flappyCanvas.clientHeight; // Make it responsive to parent container
+
+            let birdY = flappyCanvas.height / 2;
+            let birdVelocity = 0;
+            const gravity = 0.2;
+            const jumpStrength = -4;
+
+            function drawBird() {
+                flappyCtx.fillStyle = '#FFD700'; // Gold color for the bird
+                flappyCtx.beginPath();
+                flappyCtx.arc(flappyCanvas.width / 4, birdY, 15, 0, Math.PI * 2);
+                flappyCtx.fill();
+                flappyCtx.strokeStyle = '#000';
+                flappyCtx.lineWidth = 2;
+                flappyCtx.stroke();
+            }
+
+            function updateBird() {
+                birdVelocity += gravity;
+                birdY += birdVelocity;
+
+                if (birdY > flappyCanvas.height - 15) { // Ground
+                    birdY = flappyCanvas.height - 15;
+                    birdVelocity = 0;
+                }
+                if (birdY < 15) { // Ceiling
+                    birdY = 15;
+                    birdVelocity = 0;
+                }
+            }
+
+            // Simple click to jump
+            flappyCanvas.addEventListener('click', () => {
+                birdVelocity = jumpStrength;
+            });
+
+            function animateFlappy() {
+                flappyCtx.clearRect(0, 0, flappyCanvas.width, flappyCanvas.height); // Clear canvas
+                flappyCtx.fillStyle = '#000'; // Background
+                flappyCtx.fillRect(0, 0, flappyCanvas.width, flappyCanvas.height);
+
+                updateBird();
+                drawBird();
+
+                requestAnimationFrame(animateFlappy);
+            }
+            animateFlappy(); // Start the animation loop
+
+            window.addEventListener('resize', () => {
+                if (flappyCanvas.parentElement) {
+                    const parent = flappyCanvas.parentElement;
+                    flappyCanvas.width = parent.clientWidth;
+                    flappyCanvas.height = parent.clientHeight;
+                }
+            });
+        }
+
+        // --- Internet Visualization (Three.js) ---
+        const internetCanvas = document.getElementById('internetCanvas');
+        if (internetCanvas) {
+            const internetScene = new THREE.Scene();
+            const internetCamera = new THREE.PerspectiveCamera(75, internetCanvas.clientWidth / internetCanvas.clientHeight, 0.1, 1000);
+            const internetRenderer = new THREE.WebGLRenderer({ canvas: internetCanvas, alpha: true, antialias: true });
+            internetRenderer.setSize(internetCanvas.clientWidth, internetCanvas.clientHeight);
+            internetCamera.position.z = 2;
+
+            // Globe representing the Internet
+            const internetGeometry = new THREE.SphereGeometry(0.7, 32, 32);
+            const internetMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff, wireframe: true, emissive: 0x000033 });
+            const internetGlobe = new THREE.Mesh(internetGeometry, internetMaterial);
+            internetScene.add(internetGlobe);
+
+            // Network Nodes
+            const internetNodes = [];
+            for (let i = 0; i < 30; i++) {
+                const node = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffa500 })); // Orange nodes
+                // Random position on sphere surface
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((2 * Math.random()) - 1); // Distribute points evenly on sphere
+                node.position.x = 0.7 * Math.sin(phi) * Math.cos(theta);
+                node.position.y = 0.7 * Math.sin(phi) * Math.sin(theta);
+                node.position.z = 0.7 * Math.cos(phi);
+                internetScene.add(node);
+                internetNodes.push(node);
+            }
+
+            // Simple connection lines
+            const linesMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
+            for (let i = 0; i < internetNodes.length; i++) {
+                for (let j = i + 1; j < internetNodes.length; j++) {
+                    if (Math.random() < 0.1) { // Connect some random nodes
+                        const points = [];
+                        points.push(internetNodes[i].position);
+                        points.push(internetNodes[j].position);
+                        const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                        const line = new THREE.Line(lineGeometry, linesMaterial);
+                        internetScene.add(line);
+                    }
+                }
+            }
+
+            const internetLight = new THREE.PointLight(0xffffff, 1, 10);
+            internetLight.position.set(0, 0, 3);
+            internetScene.add(internetLight);
+            const internetAmbientLight = new THREE.AmbientLight(0x404040, 0.5);
+            internetScene.add(internetAmbientLight);
+
+            function animateInternet() {
+                requestAnimationFrame(animateInternet);
+                internetGlobe.rotation.y += 0.005; // Slow rotation
+                internetNodes.forEach(n => {
+                    // Pulsating effect for nodes
+                    n.scale.setScalar(1 + Math.sin(Date.now() * 0.002 + n.position.x) * 0.2);
+                });
+                internetRenderer.render(internetScene, internetCamera);
+            }
+            animateInternet();
+
+            window.addEventListener('resize', () => {
+                if (internetCanvas.parentElement) {
+                    const parent = internetCanvas.parentElement;
+                    internetRenderer.setSize(parent.clientWidth, parent.clientHeight);
+                    internetCamera.aspect = parent.clientWidth / parent.clientHeight;
+                    internetCamera.updateProjectionMatrix();
+                }
+            });
+        }
+
+        // --- GitHub Visualization (Three.js) ---
+        const githubCanvas = document.getElementById('githubCanvas');
+        if (githubCanvas) {
+            const githubScene = new THREE.Scene();
+            const githubCamera = new THREE.PerspectiveCamera(75, githubCanvas.clientWidth / githubCanvas.clientHeight, 0.1, 1000);
+            const githubRenderer = new THREE.WebGLRenderer({ canvas: githubCanvas, alpha: true, antialias: true });
+            githubRenderer.setSize(githubCanvas.clientWidth, githubCanvas.clientHeight);
+            githubCamera.position.z = 2;
+
+            // Central octahedron representing a main repository
+            const githubGeometry = new THREE.OctahedronGeometry(0.7);
+            const githubMaterial = new THREE.MeshPhongMaterial({ color: 0x880000, shininess: 150, flatShading: true });
+            const githubOcta = new THREE.Mesh(githubGeometry, githubMaterial);
+            githubScene.add(githubOcta);
+
+            // Nodes representing collaborators/branches
+            const githubNodes = [];
+            const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green nodes
+            for (let i = 0; i < 15; i++) {
+                const node = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), nodeMaterial);
+                node.position.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
+                githubScene.add(node);
+                githubNodes.push(node);
+
+                // Add a line connecting to the central octahedron
+                const points = [node.position, githubOcta.position];
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.3 });
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+                githubScene.add(line);
+            }
+
+            const githubLight = new THREE.PointLight(0xffffff, 1, 10);
+            githubLight.position.set(0, 0, 3);
+            githubScene.add(githubLight);
+            const githubAmbientLight = new THREE.AmbientLight(0x404040, 0.5);
+            githubScene.add(githubAmbientLight);
+
+            function animateGitHub() {
+                requestAnimationFrame(animateGitHub);
+                githubOcta.rotation.x += 0.005;
+                githubOcta.rotation.y += 0.008;
+
+                githubNodes.forEach(n => {
+                    // Orbit around the center slightly
+                    n.position.x += Math.sin(Date.now() * 0.001 + n.position.y) * 0.005;
+                    n.position.y += Math.cos(Date.now() * 0.001 + n.position.x) * 0.005;
+                });
+                githubRenderer.render(githubScene, githubCamera);
+            }
+            animateGitHub();
+
+            window.addEventListener('resize', () => {
+                if (githubCanvas.parentElement) {
+                    const parent = githubCanvas.parentElement;
+                    githubRenderer.setSize(parent.clientWidth, parent.clientHeight);
+                    githubCamera.aspect = parent.clientWidth / parent.clientHeight;
+                    githubCamera.updateProjectionMatrix();
+                }
+            });
+        }
+
+
+        // --- Differential Equation Solver (Conceptual/Placeholder) ---
+        // This is a complex feature. Math.js can parse expressions, but solving
+        // differential equations analytically is a vast and specialized field.
+        // A real solver would need a robust backend with symbolic computation
+        // libraries (e.g., SymPy in Python) or a dedicated JavaScript math library
+        // capable of symbolic differentiation/integration, which is very heavy.
+        // For this demo, it will provide basic feedback or a placeholder solution.
+
+        const equationImageInput = document.getElementById('equationImageInput');
+        const equationImagePreview = document.getElementById('equationImagePreview');
+        const uploadedEquationImg = document.getElementById('uploadedEquationImg');
+
+        equationImageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedEquationImg.src = e.target.result;
+                    equationImagePreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedEquationImg.src = '';
+                equationImagePreview.classList.add('hidden');
+            }
+        });
+
+        function solveEquation() {
+            const equation = document.getElementById('equationInput').value.trim();
+            const type = document.getElementById('equationType').value;
+            const equationResult = document.getElementById('equationResult');
+            const imageFile = document.getElementById('equationImageInput').files[0];
+            const textFile = document.getElementById('equationTextInput').files[0];
+
+            equationResult.innerHTML = `<span class="text-yellow-400">Processing...</span>`;
+
+            // Simulate OCR for image input
+            if (imageFile) {
+                console.log(`Simulating OCR for image: ${imageFile.name}`);
+                setTimeout(() => {
+                    equationResult.innerHTML = `<span class="text-green-400">Image uploaded. For actual solving, an OCR API and a powerful backend solver would be needed.</span>`;
+                }, 1000);
+                return;
+            }
+
+            // Simulate text file parsing
+            if (textFile) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fileContent = e.target.result;
+                    console.log(`Parsing content from ${textFile.name}: "${fileContent.substring(0, 50)}..."`);
+                    setTimeout(() => {
+                        equationResult.innerHTML = `<span class="text-green-400">Text file content loaded: "${fileContent.substring(0, 50)}...". Sending to hypothetical backend solver.</span>`;
+                    }, 1000);
+                };
+                reader.readAsText(textFile);
+                return;
+            }
+
+            if (!equation) {
+                equationResult.innerHTML = `<span class="text-red-400">Please enter an equation or upload a file.</span>`;
+                return;
+            }
+
+            let solutionText = "";
+            let errorOccurred = false;
+
+            try {
+                // Math.js can parse expressions, but not solve DEs directly without custom logic
+                const parsedExpression = math.parse(equation);
+                console.log(`Parsed equation: ${parsedExpression.toString()}`);
+
+                switch (type) {
+                    case 'linear':
+                        solutionText = `Conceptual solution for **Linear First-Order DE**:
+                                        The general form is $dy/dx + P(x)y = Q(x)$. The integrating factor is $e^{\\int P(x)dx}$.
+                                        Solving "${equation}" analytically is complex on client-side. A backend symbolic solver would provide: $y(x) = ...$`;
+                        break;
+                    case 'separable':
+                        solutionText = `Conceptual solution for **Separable DE**:
+                                        The general form is $dy/dx = f(x)g(y)$. Integrate $dy/g(y) = dx f(x)$.
+                                        Solving "${equation}" analytically is complex on client-side. A backend symbolic solver would provide: $G(y) = F(x) + C$`;
+                        break;
+                    case 'exact':
+                        solutionText = `Conceptual solution for **Exact DE**:
+                                        Check if $\\partial M/\\partial y = \\partial N/\\partial x$. If exact, find $F(x,y)$.
+                                        Solving "${equation}" analytically is complex on client-side. A backend symbolic solver would provide: $F(x,y) = C$`;
+                        break;
+                    case 'second_order_constant':
+                        solutionText = `Conceptual solution for **Second-Order Homogeneous DE (Constant Coefficients)**:
+                                        Form the characteristic equation $ar^2 + br + c = 0$. Solutions depend on roots.
+                                        Solving "${equation}" analytically is complex on client-side. A backend symbolic solver would provide: $y(x) = C_1 e^{r_1 x} + C_2 e^{r_2 x}$ (or variations).`;
+                        break;
+                    case 'numerical':
+                        solutionText = `**Numerical Approximation** for "${equation}":
+                                        This typically involves methods like Euler's method or Runge-Kutta.
+                                        A graphical tool or numerical library would be used to plot the solution curve.`;
+                        break;
+                    default:
+                        solutionText = "Selected equation type is not explicitly supported for detailed client-side solving. Please try a different type.";
+                        break;
+                }
+            } catch (e) {
+                solutionText = `Error parsing or attempting to solve: ${e.message}. Please check equation syntax.`;
+                errorOccurred = true;
+                console.error("Differential Equation Solver Error:", e);
+            }
+
+            // Display result
+            if (errorOccurred) {
+                equationResult.innerHTML = `<span class="text-red-400">${solutionText}</span>`;
+            } else {
+                equationResult.innerHTML = `<span class="text-green-400">${solutionText}</span>`;
+            }
+        }
+
+        // --- Media Window (Local Image/Video Uploads) ---
+        const personalImageGallery = document.getElementById('personalImageGallery');
+        const personalVideoCollection = document.getElementById('personalVideoCollection');
+        const noImagesMessage = document.getElementById('noImagesMessage');
+        const noVideosMessage = document.getElementById('noVideosMessage');
+
+        let personalMedia = JSON.parse(localStorage.getItem('personalMedia') || '{ "images": [], "videos": [] }');
+
+        function renderPersonalMedia() {
+            personalImageGallery.innerHTML = '';
+            personalVideoCollection.innerHTML = '';
+
+            // Images
+            if (personalMedia.images.length === 0) {
+                noImagesMessage.classList.remove('hidden');
+            } else {
+                noImagesMessage.classList.add('hidden');
+                personalMedia.images.forEach((media, index) => {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'relative group section-card hover-scale overflow-hidden';
+                    imgContainer.innerHTML = `
+                        <img src="${media.url}" alt="${media.name}" class="w-full h-40 object-cover rounded-lg mb-2">
+                        <p class="text-sm text-gray-300 truncate">${media.name}</p>
+                        <button onclick="deletePersonalMedia('images', ${index})" class="absolute top-2 right-2 bg-red-700 p-1 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 11-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    `;
+                    personalImageGallery.appendChild(imgContainer);
+                });
+            }
+
+            // Videos
+            if (personalMedia.videos.length === 0) {
+                noVideosMessage.classList.remove('hidden');
+            } else {
+                noVideosMessage.classList.add('hidden');
+                personalMedia.videos.forEach((media, index) => {
+                    const videoContainer = document.createElement('div');
+                    videoContainer.className = 'relative group section-card hover-scale overflow-hidden';
+                    videoContainer.innerHTML = `
+                        <video controls class="w-full h-64 object-cover rounded-lg mb-2">
+                            <source src="${media.url}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <p class="text-sm text-gray-300 truncate">${media.name}</p>
+                        <button onclick="deletePersonalMedia('videos', ${index})" class="absolute top-2 right-2 bg-red-700 p-1 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 11-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    `;
+                    personalVideoCollection.appendChild(videoContainer);
+                });
+            }
+        }
+
+        function handlePersonalFileUpload(type) {
+            let inputId;
+            if (type === 'image') inputId = 'uploadPersonalImage';
+            else if (type === 'video') inputId = 'uploadPersonalVideo';
+            else return;
+
+            const files = document.getElementById(inputId).files;
+
+            if (files.length > 0) {
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const fileObj = {
+                            name: file.name,
+                            url: e.target.result // Base64 or data URL
+                        };
+                        personalMedia[type].push(fileObj);
+                        localStorage.setItem('personalMedia', JSON.stringify(personalMedia));
+                        renderPersonalMedia();
+                    };
+                    reader.readAsDataURL(file);
+                });
+                document.getElementById(inputId).value = ''; // Clear input
+            } else {
+                alert('Please select files to upload.');
+            }
+        }
+
+        function deletePersonalMedia(type, index) {
+            if (confirm(`Are you sure you want to delete this ${type.slice(0, -1)}?`)) {
+                personalMedia[type].splice(index, 1);
+                localStorage.setItem('personalMedia', JSON.stringify(personalMedia));
+                renderPersonalMedia();
+            }
+        }
+
+        renderPersonalMedia(); // Initial render for personal media
+    </script>
+</body>
+</html>
